@@ -36,8 +36,6 @@
   (case command
     [(tick) (values 'stay (add1 idx))]
     [(advance)
-     (displayln text)
-     (displayln idx)
      (if (>= idx (string-length text))
          (values 'next 0)
          (values 'stay page-length))]
