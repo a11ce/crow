@@ -1,30 +1,9 @@
 #lang racket/base
 
-(require 2htdp/image
-         2htdp/universe
-         racket/generator
-         "page.rkt"
+(require 2htdp/universe
+         "vn-gen.rkt"
+         "choice-page.rkt"
          "test-data.rkt")
-
-(define (prefix str idx)
-  (substring str 0 (min idx (string-length str))))
-
-(define (vn-gen pages)
-  (generator (_)
-    (for/fold ([pages pages]
-               [idx 0])
-              ([_ (in-naturals)])
-      (define page (car pages))
-      (define text (page-text page))
-      (define page-length (string-length text))
-      (define command (yield (render-page page (prefix text idx))))
-      (case command
-        [(tick) (values pages (add1 idx))]
-        [(advance) (if (>= idx (string-length text))
-                       (values (cdr pages) 0)
-                       (values pages page-length))]
-        [(wait) (values pages idx)]
-        [else (error "unknown vn-gen command" command)]))))
 
 (struct state (text-gen))
 
@@ -32,7 +11,7 @@
   (state (vn-gen test-pages)))
 
 (define (render s)
-  ((state-text-gen s) 'wait))
+  ((state-text-gen s) 'poll))
 
 (define (tick s)
   ((state-text-gen s) 'tick)
@@ -41,6 +20,10 @@
 (define (handle-key s key)
   (when (key=? key " ")
     ((state-text-gen s) 'advance))
+  (when (key=? key "1")
+    ((state-text-gen s) (selection 1)))
+  (when (key=? key "2")
+    ((state-text-gen s) (selection 2)))
   s)
 
 (big-bang (init)
