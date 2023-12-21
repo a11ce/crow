@@ -1,9 +1,11 @@
 #lang racket/base
 
-(require 2htdp/image)
+(require 2htdp/image
+         "text-box.rkt")
 
 (provide (struct-out page)
-         render-page)
+         render-page
+         put-page-image-pinhole)
 
 (struct page (image text frame-color text-color))
 
@@ -15,23 +17,12 @@
   (define text-color (page-text-color page))
   (define image (page-image page))
   (overlay/align "center" "bottom"
-                 (render-text-box text frame-color text-color)
+                 (render-main-text-box text frame-color text-color)
                  (overlay/align "center" "top"
                                 image (rectangle width height 'solid 'black))))
 
-(define (render-text-box str frame-color text-color)
-  (define box-height (/ height 3))
-  (define inset 20)
-  (define border 5)
-  (define sum-inset (+ inset border))
-  (define frame
-    (overlay
-     (rectangle (- width (* 2 border)) (- box-height (* 2 border))
-                'solid 'black)
-     (rectangle width box-height 'solid frame-color)))
-  (define text-img (text str 24 text-color))
-  (overlay/align/offset
-   "left" "top"
-   text-img
-   (- sum-inset) (- sum-inset)
-   frame))
+(define (put-page-image-pinhole page-img)
+  (put-pinhole (/ width 2) (/ height 3) page-img))
+
+(define (render-main-text-box text frame-color text-color)
+  (render-text-box text frame-color text-color width (/ height 3) 20 5))

@@ -1,32 +1,35 @@
 #lang racket/base
 
-(require 2htdp/universe
+(require (except-in 2htdp/universe state)
          "vn-gen.rkt"
-         "choice-page.rkt"
+         "input.rkt"
          "test-data.rkt")
 
-(struct state (text-gen))
-
 (define (init)
-  (state (vn-gen test-pages)))
+  (state (vn-gen test-pages)
+         page-handle-key
+         page-handle-mouse))
 
 (define (render s)
-  ((state-text-gen s) 'poll))
+  (define ctx*img ((state-text-gen s) 'poll))
+  (set-state-on-mouse! s (vn-ctx-on-mouse ctx*img))
+  (set-state-on-key! s (vn-ctx-on-key ctx*img))
+  (vn-ctx-image ctx*img))
 
 (define (tick s)
   ((state-text-gen s) 'tick)
   s)
 
-(define (handle-key s key)
-  (when (key=? key " ")
-    ((state-text-gen s) 'advance))
-  (when (key=? key "1")
-    ((state-text-gen s) (selection 1)))
-  (when (key=? key "2")
-    ((state-text-gen s) (selection 2)))
-  s)
+(define (dispatch-handle-key s k)
+  (define on-key (state-on-key s))
+  (on-key s k))
+
+(define (dispatch-handle-mouse s x y evt)
+  (define on-mouse (state-on-mouse s))
+  (on-mouse s x y evt))
 
 (big-bang (init)
   [to-draw render]
-  [on-key handle-key]
+  [on-key dispatch-handle-key]
+  [on-mouse dispatch-handle-mouse]
   [on-tick tick 1/15])
