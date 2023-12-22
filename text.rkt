@@ -2,23 +2,37 @@
 
 (require (except-in 2htdp/image text)
          racket/match
+         racket/string
          memo
          "font.rkt")
 
 (provide text)
 
-; XXX wrapping
-(define (text string size color)
+(define (text str size color)
+  (define lines (string-split str "\n"))
+  (define drawn
+    (map (λ (l) (draw-line l size color))
+         lines))
+  (cond
+    [(null? drawn) empty-image]
+    [(null? (cdr drawn)) (car drawn)]
+    [else
+     (apply above/align "left" drawn)]))
+
+(define (draw-line str size color)
   (define glyphs
     (map (λ (c) (draw-char c size color))
-         (string->list string)))
+         (string->list str)))
   (cond
     [(null? glyphs) empty-image]
     [(null? (cdr glyphs)) (car glyphs)]
     [else (apply beside glyphs)]))
 
 (define (draw-char char size color)
-  (color-glyph (scale-glyph (hash-ref the-font char) size) color))
+  (color-glyph (scale-glyph
+                (hash-ref the-font char
+                          (λ () (error "unmapped char" char)))
+                size) color))
 
 (define/memoize (scale-glyph glyph size)
   (scale (/ size (image-height glyph)) glyph))
