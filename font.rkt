@@ -1,0 +1,37 @@
+#lang racket/base
+
+(require (except-in 2htdp/image text)
+         racket/string)
+
+(provide the-font)
+
+(define printable-ASCII (string-split
+                         #<<ASCII
+ !"#$%&'()*+,-./
+0123456789;:<=>?
+@ABCDEFGHIJKLMNO
+PQRSTUVWXYZ[\]^_
+`abcdefghijklmno
+pqrstuvwxyz{|}~ 
+ASCII
+                         "\n"
+                         ))
+
+(define atlas-filename "apricot-atlas.png")
+
+(define (load-font charset filename)
+  (define image (bitmap/file filename))
+  (define row-len (string-length (car charset)))
+  (define rows (length charset))
+  (define char-width (/ (image-width image) row-len))
+  (define char-height (/ (image-height image) rows))
+  (for*/hash ([px row-len]
+              [py rows])
+    (values (list-ref (string->list (list-ref charset py)) px)
+            (crop (* px char-width)
+                  (* py char-height)
+                  char-width
+                  char-height
+                  image))))
+
+(define the-font (load-font printable-ASCII atlas-filename))

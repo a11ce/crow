@@ -1,9 +1,11 @@
 #lang racket/base
 
-(require 2htdp/image)
+(require (except-in 2htdp/image text)
+         "text.rkt")
 
 (provide render-text-box)
 
+; TODO centered
 (define (render-text-box str frame-color text-color
                          box-width box-height
                          inset border)
@@ -13,7 +15,7 @@
      (rectangle (- box-width (* 2 border)) (- box-height (* 2 border))
                 'solid 'black)
      (rectangle box-width box-height 'solid frame-color)))
-  (define text-img (text str 24 text-color))
+  (define text-img (text str 32 text-color))
   (overlay/align/offset
    "left" "top"
    text-img

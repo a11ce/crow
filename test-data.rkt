@@ -21,7 +21,7 @@
 
 (define test-pages
   (list (page (bitmap/file "train.png")
-              "meow meow meow meow meow meow meow meow\nmeow meow"
+              "Meow meow meow meow meow meow meow meow?"
               purple blue)
         test-choice
         (page (bitmap/file "trees.png")
