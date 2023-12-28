@@ -3,7 +3,8 @@
 (require (except-in 2htdp/image text)
          racket/string)
 
-(provide the-font)
+(provide the-font
+         normalize-text-charset)
 
 (define printable-ASCII (string-split
                          #<<ASCII
@@ -35,3 +36,16 @@ ASCII
                   image))))
 
 (define the-font (load-font printable-ASCII atlas-filename))
+
+(define (normalize-text-charset text)
+  (list->string
+   (map (λ (char)
+          (case char
+            [(#\“ #\”) #\"]
+            [(#\‘ #\’) #\']
+            [(#\—) #\-]
+            [(#\newline) #\newline]
+            [else (if (hash-has-key? the-font char)
+                      char
+                      (error "unmapped char in normalization" char))]))
+        (string->list text))))

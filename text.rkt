@@ -31,7 +31,7 @@
 (define (draw-char char size color)
   (color-glyph (scale-glyph
                 (hash-ref the-font char
-                          (λ () (error "unmapped char" char)))
+                          (λ () (error "unmapped char at runtime" char)))
                 size) color))
 
 (define/memoize (scale-glyph glyph size)

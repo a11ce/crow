@@ -1,13 +1,20 @@
 #lang racket/base
 
 (require 2htdp/image
-         "text-box.rkt")
+         "text-box.rkt"
+         "wrapping.rkt")
 
 (provide (struct-out page)
+         text->pages
          render-page
          put-page-image-pinhole)
 
 (struct page (image text frame-color text-color))
+
+(define (text->pages text image frame-color text-color)
+  (map (λ (c)
+         (page image c frame-color text-color))
+       (wrap text)))
 
 (define width 640)
 (define height 480)
@@ -25,4 +32,4 @@
   (put-pinhole (/ width 2) (/ height 3) page-img))
 
 (define (render-main-text-box text frame-color text-color)
-  (render-text-box text frame-color text-color width (/ height 3) 20 5))
+  (render-text-box text frame-color text-color width (/ height 3) 10 5))
