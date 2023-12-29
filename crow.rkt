@@ -11,7 +11,7 @@
          page-handle-mouse))
 
 (define (render s)
-  (define ctx*img ((state-text-gen s) 'poll))
+  (define ctx*img ((state-text-gen s) 'render))
   (set-state-on-mouse! s (vn-ctx-on-mouse ctx*img))
   (set-state-on-key! s (vn-ctx-on-key ctx*img))
   (vn-ctx-image ctx*img))

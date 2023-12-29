@@ -21,8 +21,13 @@
 (define (make-choice-page-handle-mouse n)
   (define bboxes (choice-button-bboxes n))
   (lambda (s x y evt)
-    (when (equal? evt "button-down")
-      (for ([bbox bboxes]
-            #:when (in-bbox? bbox x y))
-        ((state-text-gen s) `(select ,(bbox-tag bbox)))))
+    (unless
+        (for/first ([bbox bboxes]
+                    #:when (in-bbox? bbox x y))
+          (case evt
+            [("move")
+             ((state-text-gen s) `(hover ,(bbox-tag bbox)))]
+            [("button-down")
+             ((state-text-gen s) `(select ,(bbox-tag bbox)))]))
+      ((state-text-gen s) '(hover #f)))
     s))

@@ -14,10 +14,7 @@
 
 (define alice-raw (normalize-text-charset (file->string "alice.txt")))
 
-
-(define test-pages (text->pages alice-raw (bitmap/file "train.png") red blue))
-
-#;(define test-choice
+(define test-choice
   (choice-page
    (bitmap/file "train.png") "choose awoo(1) or arf(2)?" purple blue
    (list (choice-opt "wolf"
@@ -26,12 +23,25 @@
          (choice-opt "dog"
                      (list (page (bitmap/file "train.png") "arf arf arf" purple blue))))))
 
+(define test-pages
+  (cons test-choice
+        (text->pages alice-raw (bitmap/file "train.png") red blue)))
+
+#;(define test-choice
+    (choice-page
+     (bitmap/file "train.png") "choose awoo(1) or arf(2)?" purple blue
+     (list (choice-opt "wolf"
+                       (list (page (bitmap/file "trees.png") "awoo awoo" purple blue)
+                             (page (bitmap/file "train.png") "awooooooooooooooooooooooooooo" red blue)))
+           (choice-opt "dog"
+                       (list (page (bitmap/file "train.png") "arf arf arf" purple blue))))))
+
 #;(define test-pages
-  (list (page (bitmap/file "train.png")
-              "Meow meow meow meow meow meow meow meow?\nmeow meow\n0123456789012345678901234567890123456789012345\n\
+    (list (page (bitmap/file "train.png")
+                "Meow meow meow meow meow meow meow meow?\nmeow meow\n0123456789012345678901234567890123456789012345\n\
 !\"#$%&'()*+,-./"
-              purple blue)
-        test-choice
-        (page (bitmap/file "trees.png")
-              "yip yip yip yip yip yip"
-              red blue)))
+                purple blue)
+          test-choice
+          (page (bitmap/file "trees.png")
+                "yip yip yip yip yip yip"
+                red blue)))

@@ -14,16 +14,19 @@
 (struct choice-opt (label pages))
 (struct choice-page page (opts))
 
-(define (render-choice-page page text)
+(define (render-choice-page page text hovered)
   (define page-base
     (put-page-image-pinhole (render-page page text)))
   (define options-img
     (apply above
-           (for/list ([opt (choice-page-opts page)])
+           (for/list ([opt (choice-page-opts page)]
+                      [idx (length (choice-page-opts page))])
              (above
               (rectangle 1 10 'solid (color 0 0 0 0))
               (render-choice-button (choice-opt-label opt)
-                                    (page-frame-color page)
+                                    (if (equal? idx hovered)
+                                        (color 39 193 155)
+                                        (page-frame-color page))
                                     (page-text-color page))
               (rectangle 1 10 'solid (color 0 0 0 0))))))
   (clear-pinhole (overlay/pinhole

@@ -47,22 +47,27 @@
      (if (>= idx (string-length text))
          (values 'next 0)
          (values 'stay page-length))]
-    [(poll) (values 'stay idx)]
+    [(render) (values 'stay idx)]
     [else (error "unknown vn-gen command" command)]))
 
 (define (vn-gen-choice page)
   (define text (page-text page))
   (define handle-mouse (make-choice-page-handle-mouse
                         (length (choice-page-opts page))))
-  (let loop ([idx 0])
+  (let loop ([idx 0]
+             [hovered #f])
     (define command (yield (vn-ctx
-                            (render-choice-page page (prefix text idx))
+                            (render-choice-page page (prefix text idx)
+                                                hovered)
                             page-handle-key
                             handle-mouse)))
     (match command
       [(list 'select n)
        (choice-opt-pages (list-ref (choice-page-opts page) n))]
-      ['advance (loop (string-length (page-text page)))]
-      ['tick (loop (add1 idx))]
-      ['poll (loop idx)]
+      [(list 'hover n)
+       (loop idx n)]
+      ['advance
+       (loop (string-length (page-text page)) hovered)]
+      ['tick (loop (add1 idx) hovered)]
+      ['render (loop idx hovered)]
       [else (error "unknown vn-gen command" command)])))
