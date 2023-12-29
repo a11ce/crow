@@ -38,10 +38,10 @@
 (define height 480)
 
 (define (render-choice-button text frame-color text-color)  
-  (render-text-box text frame-color text-color
+  (render-centered-text-box text frame-color text-color
                    (* 1/3 width)
                    (* 1/10 height)
-                   10 5))
+                   5))
 
 (struct bbox (tag tl br) #:transparent)
 (struct pt (x y) #:transparent)
