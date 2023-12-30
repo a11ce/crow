@@ -18,43 +18,40 @@
 (define (vn-gen pages)
   (generator (_)
     (let loop ([pages pages]
-               [idx 0]
                [stack '()])
       (define page (or (null? pages) (car pages)))
       (cond
         [(and (null? pages) (null? stack))
          (raise 'game-end)]
         [(null? pages)
-         (loop (car stack) 0 (cdr stack))]
+         (loop (car stack) (cdr stack))]
         [(choice-page? page)
-         (loop (vn-gen-choice page) 0 (cons (cdr pages) stack))]
+         (loop (vn-gen-choice page) (cons (cdr pages) stack))]
         [(list? page)
-         (loop page 0 (cons (cdr pages) stack))]
+         (loop page (cons (cdr pages) stack))]
         [(page? page)
-         ; TODO split to own loop
-         (let-values ([(page-move idx) (vn-gen-page page idx)])
-           (loop (if (equal? page-move 'next)
-                     (cdr pages) pages)
-                 idx stack))]
+         (vn-gen-page page)
+         (loop (cdr pages) stack)]
         [else (error "unknown page type" page)]))))
 
-(define (vn-gen-page page idx)
+(define (vn-gen-page page)
   (define text (page-text page))
   (define page-length (string-length text))
   ; TODO only when advanced
   (define delayed-page-length (+ page-length 5))
-  (define command (yield (vn-ctx
-                          (render-page page (prefix text idx))
-                          page-handle-key
-                          page-handle-mouse)))
-  (case command
-    [(tick) (values 'stay (add1 idx))]
-    [(advance)
-     (if (>= idx delayed-page-length)
-         (values 'next 0)
-         (values 'stay (add1 (max idx page-length))))]
-    [(render) (values 'stay idx)]
-    [else (error "unknown vn-gen command" command)]))
+  (let loop ([idx 0])
+    (define command (yield (vn-ctx
+                            (render-page page (prefix text idx))
+                            page-handle-key
+                            page-handle-mouse)))
+
+    (case command
+      [(tick) (loop (add1 idx))]
+      [(advance) (if (>= idx delayed-page-length)
+                     #t
+                     (loop (add1 (max idx page-length))))]
+      [(render) (loop idx)]
+      [else (error "unknown vn-gen command" command)])))
 
 (define (vn-gen-choice page)
   (define text (page-text page))
