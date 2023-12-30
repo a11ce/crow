@@ -28,11 +28,14 @@
          (loop (car stack) 0 (cdr stack))]
         [(choice-page? page)
          (loop (vn-gen-choice page) 0 (cons (cdr pages) stack))]
-        [else
+        [(list? page)
+         (loop page 0 (cons (cdr pages) stack))]
+        [(page? page)
          (let-values ([(page-move idx) (vn-gen-page page idx)])
            (loop (if (equal? page-move 'next)
                      (cdr pages) pages)
-                 idx stack))]))))
+                 idx stack))]
+        [else (error "unknown page type" page)]))))
 
 (define (vn-gen-page page idx)
   (define text (page-text page))
