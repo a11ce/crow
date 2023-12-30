@@ -31,6 +31,7 @@
         [(list? page)
          (loop page 0 (cons (cdr pages) stack))]
         [(page? page)
+         ; TODO split to own loop
          (let-values ([(page-move idx) (vn-gen-page page idx)])
            (loop (if (equal? page-move 'next)
                      (cdr pages) pages)
@@ -40,6 +41,8 @@
 (define (vn-gen-page page idx)
   (define text (page-text page))
   (define page-length (string-length text))
+  ; TODO only when advanced
+  (define delayed-page-length (+ page-length 5))
   (define command (yield (vn-ctx
                           (render-page page (prefix text idx))
                           page-handle-key
@@ -47,9 +50,9 @@
   (case command
     [(tick) (values 'stay (add1 idx))]
     [(advance)
-     (if (>= idx (string-length text))
+     (if (>= idx delayed-page-length)
          (values 'next 0)
-         (values 'stay page-length))]
+         (values 'stay (add1 (max idx page-length))))]
     [(render) (values 'stay idx)]
     [else (error "unknown vn-gen command" command)]))
 
