@@ -39,18 +39,21 @@
   (define page-length (string-length text))
   ; TODO only when advanced
   (define delayed-page-length (+ page-length 5))
-  (let loop ([idx 0])
+  (let loop ([idx 0]
+             [to-render? #t])
     (define command (yield (vn-ctx
-                            (render-page page (prefix text idx))
+                            (if to-render?
+                                (render-page page (prefix text idx))
+                                blank-page-image)
                             page-handle-key
                             page-handle-mouse)))
 
     (case command
-      [(tick) (loop (add1 idx))]
+      [(tick) (loop (add1 idx) #f)]
       [(advance) (if (>= idx delayed-page-length)
                      #t
-                     (loop (add1 (max idx page-length))))]
-      [(render) (loop idx)]
+                     (loop (add1 (max idx page-length)) #f))]
+      [(render) (loop idx #t)]
       [else (error "unknown vn-gen command" command)])))
 
 (define (vn-gen-choice page)
@@ -58,19 +61,22 @@
   (define handle-mouse (make-choice-page-handle-mouse
                         (length (choice-page-opts page))))
   (let loop ([idx 0]
+             [to-render? #t]
              [hovered #f])
     (define command (yield (vn-ctx
-                            (render-choice-page page (prefix text idx)
-                                                hovered)
+                            (if to-render?
+                                (render-choice-page page (prefix text idx)
+                                                    hovered)
+                                blank-page-image)
                             page-handle-key
                             handle-mouse)))
     (match command
       [(list 'select n)
        (choice-opt-pages (list-ref (choice-page-opts page) n))]
       [(list 'hover n)
-       (loop idx n)]
+       (loop idx #f n)]
       ['advance
-       (loop (string-length (page-text page)) hovered)]
-      ['tick (loop (add1 idx) hovered)]
-      ['render (loop idx hovered)]
+       (loop (string-length (page-text page)) #f hovered)]
+      ['tick (loop (add1 idx) #f hovered)]
+      ['render (loop idx #t hovered)]
       [else (error "unknown vn-gen command" command)])))

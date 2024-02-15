@@ -5,6 +5,7 @@
          "wrapping.rkt")
 
 (provide (struct-out page)
+         blank-page-image
          text->pages
          render-page
          put-page-image-pinhole)
@@ -19,7 +20,14 @@
 (define width 640)
 (define height 480)
 
+(define blank-page-image empty-image)
+
+(define frame-render-count (make-parameter 0))
+(define (inc-frame-count!) (frame-render-count (add1 (frame-render-count))))
+
 (define (render-page page text)
+  (inc-frame-count!)
+  ;(printf "render ~a~n" (frame-render-count))
   (define frame-color (page-frame-color page))
   (define text-color (page-text-color page))
   (define image (page-image page))
