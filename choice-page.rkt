@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require 2htdp/image
+(require 2htdp-raven/image
          "page.rkt"
          "text-box.rkt")
 

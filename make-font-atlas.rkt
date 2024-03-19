@@ -1,6 +1,6 @@
 #lang racket
 
-(require 2htdp/image)
+(require 2htdp-raven/image)
 
 (define printable-ASCII
   #<<ASCII

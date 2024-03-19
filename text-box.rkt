@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require (except-in 2htdp/image text)
+(require (except-in 2htdp-raven/image text)
          "text.rkt")
 
 (provide render-text-box
