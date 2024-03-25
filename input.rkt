@@ -1,33 +1,46 @@
 #lang racket/base
 
 (require 2htdp-raven/universe
+         racket/contract
          "choice-page.rkt")
 
-(provide (struct-out state)
+(provide (struct-out crow-state)
          page-handle-key
          page-handle-mouse
-         make-choice-page-handle-mouse)
+         make-choice-page-handle-mouse
+         handle-mouse/c handle-key/c)
 
-(struct state (text-gen on-key on-mouse) #:mutable)
+(struct crow-state (text-gen on-key on-mouse) #:mutable #:transparent)
 
-(define (page-handle-key s key)
+(define handle-mouse/c
+  (-> crow-state? integer? integer? mouse-event? crow-state?))
+
+(define handle-key/c
+  (-> crow-state? key-event? crow-state?))
+
+(define/contract (page-handle-key s key)
+  handle-key/c
   (when (key=? key " ")
-    ((state-text-gen s) 'advance))
+    ((crow-state-text-gen s) 'advance))
   s)
 
-(define (page-handle-mouse s x y evt)
+(define/contract (page-handle-mouse s x y evt)
+  handle-mouse/c
   s)
 
-(define (make-choice-page-handle-mouse n)
+(define/contract (make-choice-page-handle-mouse n)
+  (-> integer? handle-mouse/c)
   (define bboxes (choice-button-bboxes n))
-  (lambda (s x y evt)
+  (define/contract (choice-page-handle-mouse s x y evt)
+    handle-mouse/c
     (unless
         (for/first ([bbox bboxes]
                     #:when (in-bbox? bbox x y))
           (case evt
             [("move")
-             ((state-text-gen s) `(hover ,(bbox-tag bbox)))]
+             ((crow-state-text-gen s) `(hover ,(bbox-tag bbox)))]
             [("button-down")
-             ((state-text-gen s) `(select ,(bbox-tag bbox)))]))
-      ((state-text-gen s) '(hover #f)))
-    s))
+             ((crow-state-text-gen s) `(select ,(bbox-tag bbox)))]))
+      ((crow-state-text-gen s) '(hover #f)))
+    s)
+  choice-page-handle-mouse)

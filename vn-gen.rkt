@@ -2,6 +2,7 @@
 
 (require racket/generator
          racket/match
+         racket/contract
          "page.rkt"
          "choice-page.rkt"
          "input.rkt")
@@ -10,29 +11,47 @@
          (struct-out vn-ctx))
 
 ; TODO more caching probably
-(struct vn-ctx (image on-key on-mouse))
+(struct vn-ctx (image on-key on-mouse) #:transparent)
+
+(define (vn-gen-command? dat)
+  (match dat
+    [(or 'advance 'tick 'render)
+     #t]
+    [(list (or 'hover 'select) cmd)
+     #t]
+    [else #f]))
+
+(define vn-gen/c
+  (-> vn-gen-command? vn-ctx?))
+
+(define (contractualize-vn-gen gen)
+  (define/contract (vn-gen . args)
+    vn-gen/c
+    (apply gen args))
+  vn-gen)
 
 (define (prefix str idx)
   (substring str 0 (min idx (string-length str))))
 
 (define (vn-gen pages)
-  (generator (_)
-    (let loop ([pages pages]
-               [stack '()])
-      (define page (or (null? pages) (car pages)))
-      (cond
-        [(and (null? pages) (null? stack))
-         (raise 'game-end)]
-        [(null? pages)
-         (loop (car stack) (cdr stack))]
-        [(choice-page? page)
-         (loop (vn-gen-choice page) (cons (cdr pages) stack))]
-        [(list? page)
-         (loop page (cons (cdr pages) stack))]
-        [(page? page)
-         (vn-gen-page page)
-         (loop (cdr pages) stack)]
-        [else (error "unknown page type" page)]))))
+  (contractualize-vn-gen
+   (generator (_)
+     (let loop ([pages pages]
+                [stack '()])
+       (define page (or (null? pages) (car pages)))
+       (cond
+         [(and (null? pages) (null? stack))
+          (raise 'game-end)]
+         [(null? pages)
+          (loop (car stack) (cdr stack))]
+         [(choice-page? page)
+          (loop (vn-gen-choice page) (cons (cdr pages) stack))]
+         [(list? page)
+          (loop page (cons (cdr pages) stack))]
+         [(page? page)
+          (vn-gen-page page)
+          (loop (cdr pages) stack)]
+         [else (error "unknown page type" page)])))))
 
 (define (vn-gen-page page)
   (define text (page-text page))
