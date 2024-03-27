@@ -2,7 +2,9 @@
 
 (require 2htdp-raven/image
          racket/file
+         racket/function
          "page.rkt"
+         "lazy-section.rkt"
          "font.rkt"
          "choice-page.rkt")
 
@@ -26,7 +28,17 @@
 (define (ex-page text)
   (text->pages text (bitmap/file "train.png") red blue))
 
-(define p1 (ex-page "1"))
+(define (ex-lazy-section text)
+  (lazy-section (thunk* text)
+                (thunk* (bitmap/file "train.png"))
+                (thunk* red)
+                (thunk* blue)))
+
+
+
+(define p1 (ex-lazy-section "Ille mi par esse deo videtur, ille, si fas est, superare divos, qui sedens adversus identidem te spectat et audit
+dulce ridentem, misero quod omnes eripit sensus mihi!"))
+(define p1.1 (ex-lazy-section "1"))
 (define p2 (ex-page "2"))
 (define p3 (ex-page "3"))
 (define p4 (ex-page "4"))
@@ -36,5 +48,5 @@
 (define p3.3 (ex-page "3.3"))
 
 (define test-pages
-  `(,p1 (,p2 ,test-choice ,p3) ((((,p3.1 ((,p3.2) ,p3.3))))) ,p4
+  `(,p1 ,p1.1 (,p2 ,test-choice ,p3) ((((,p3.1 ((,p3.2) ,p3.3))))) ,p4
         ,(ex-page alice-raw)))

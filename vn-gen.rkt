@@ -5,6 +5,7 @@
          racket/contract
          "page.rkt"
          "choice-page.rkt"
+         "lazy-section.rkt"
          "input.rkt")
 
 (provide vn-gen
@@ -36,22 +37,31 @@
 (define (vn-gen pages)
   (contractualize-vn-gen
    (generator (_)
-     (let loop ([pages pages]
-                [stack '()])
-       (define page (or (null? pages) (car pages)))
-       (cond
-         [(and (null? pages) (null? stack))
-          (raise 'game-end)]
-         [(null? pages)
-          (loop (car stack) (cdr stack))]
-         [(choice-page? page)
-          (loop (vn-gen-choice page) (cons (cdr pages) stack))]
-         [(list? page)
-          (loop page (cons (cdr pages) stack))]
-         [(page? page)
-          (vn-gen-page page)
-          (loop (cdr pages) stack)]
-         [else (error "unknown page type" page)])))))
+     (vn-gen-pages pages (make-hash)))))
+
+(define (vn-gen-pages pages flags)
+  (let loop ([pages pages]
+             [stack '()]
+             [flags flags])
+    (define page (or (null? pages) (car pages)))
+    (cond
+      ; TODO flags
+      [(and (null? pages) (null? stack))
+       flags]
+      [(null? pages)
+       (loop (car stack) (cdr stack) flags)]
+      [(choice-page? page)
+       (loop (vn-gen-choice page) (cons (cdr pages) stack) flags)]
+      [(list? page)
+       (loop page (cons (cdr pages) stack) flags)]
+      [(page? page)
+       (vn-gen-page page)
+       (loop (cdr pages) stack flags)]
+      [(lazy-section? page)
+       (define new-flags (vn-gen-lazy-section page flags))
+       (loop (cdr pages) stack new-flags)]
+      [else (error "unknown page type" page)])))
+
 
 (define (vn-gen-page page)
   (define text (page-text page))
@@ -74,6 +84,11 @@
                      (loop (add1 (max idx page-length)) #f))]
       [(render) (loop idx #t)]
       [else (error "unknown vn-gen command" command)])))
+
+
+(define (vn-gen-lazy-section sec flags)
+  (define pages (eval-lazy-section sec #f))
+  (vn-gen-pages pages flags))
 
 (define (vn-gen-choice page)
   (define text (page-text page))
