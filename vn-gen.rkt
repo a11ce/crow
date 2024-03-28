@@ -6,6 +6,7 @@
          "page.rkt"
          "choice-page.rkt"
          "lazy-section.rkt"
+         "flags.rkt"
          "input.rkt")
 
 (provide vn-gen
@@ -37,7 +38,7 @@
 (define (vn-gen pages)
   (contractualize-vn-gen
    (generator (_)
-     (vn-gen-pages pages (make-hash)))))
+     (vn-gen-pages pages (make-flagset)))))
 
 (define (vn-gen-pages pages flags)
   (let loop ([pages pages]
@@ -60,6 +61,8 @@
       [(lazy-section? page)
        (define new-flags (vn-gen-lazy-section page flags))
        (loop (cdr pages) stack new-flags)]
+      [(flag-set-point? page)
+       (loop (cdr pages) stack (flagset-add flags (flag-set-point-flag page)))]
       [else (error "unknown page type" page)])))
 
 
@@ -87,7 +90,7 @@
 
 
 (define (vn-gen-lazy-section sec flags)
-  (define pages (eval-lazy-section sec #f))
+  (define pages (eval-lazy-section sec flags))
   (vn-gen-pages pages flags))
 
 (define (vn-gen-choice page)
