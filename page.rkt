@@ -10,7 +10,7 @@
          render-page
          put-page-image-pinhole)
 
-(struct page (image text frame-color text-color))
+(struct page (image text frame-color text-color) #:transparent)
 
 (define (text->pages text image frame-color text-color)
   (map (λ (c)

@@ -35,16 +35,19 @@
 (define (prefix str idx)
   (substring str 0 (min idx (string-length str))))
 
-(define (vn-gen pages)
+(define (vn-gen first-page)
   (contractualize-vn-gen
    (generator (_)
-     (vn-gen-pages pages (make-flagset)))))
+     (vn-gen-pages first-page (make-flagset)))))
 
 (define (vn-gen-pages pages flags)
   (let loop ([pages pages]
              [stack '()]
              [flags flags])
-    (define page (or (null? pages) (car pages)))
+    (define page
+      (cond
+        [(pair? pages) (car pages)]
+        [else pages]))
     (cond
       ; TODO flags
       [(and (null? pages) (null? stack))
@@ -61,6 +64,10 @@
       [(lazy-section? page)
        (define new-flags (vn-gen-lazy-section page flags))
        (loop (cdr pages) stack new-flags)]
+      [(lazy-complete-page? page)
+       ; i think this is wrong?
+       (define concrete-page (eval-lazy-complete-page page flags))
+       (loop (vn-gen-choice page) (cons (cdr pages) stack) flags)]
       [(flag-set-point? page)
        (loop (cdr pages) stack (flagset-add flags (flag-set-point-flag page)))]
       [else (error "unknown page type" page)])))
@@ -92,6 +99,10 @@
 (define (vn-gen-lazy-section sec flags)
   (define pages (eval-lazy-section sec flags))
   (vn-gen-pages pages flags))
+
+(define (vn-gen-lazy-complete-page lpage flags)
+  (define page (eval-lazy-complete-page lpage flags))
+  (vn-gen-pages page flags))
 
 (define (vn-gen-choice page)
   (define text (page-text page))

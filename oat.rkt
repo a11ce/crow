@@ -1,111 +1,72 @@
 #lang racket
 
-(require racket/contract)
+(require "oat-parse.rkt"
+         "lazy-section.rkt"
+         "choice-page.rkt"
+         "flags.rkt"
+         2htdp-raven/image)
 
-(struct cond-section (title flag then else) #:transparent)
-(struct uncond-section (title body) #:transparent)
-(struct body (directives text next-opts) #:transparent)
+(provide load-file)
 
-(struct directive () #:transparent)
-(struct set-flag-directive directive (flag) #:transparent)
-(struct set-image-directive directive (image-name) #:transparent)
+;(define parsed (parse-file "test.oat.rkt"))
 
-(struct next-opt (name label) #:transparent)
 
-(define/contract (parse-section str)
-  (-> string? (or/c cond-section? uncond-section?))
-  (define title-line (first (string-split str "\n")))
-  (cond
-    [(string-prefix? title-line "# ")
-     (parse-uncond-section str)]
-    [(string-prefix? title-line "#? ")
-     (parse-cond-section str)]
-    [else (error 'missing-title-line (string-append "\n" str))]))
+; TODO compile directives
+; TODO compile style-setting
 
-(define/contract (parse-uncond-section str)
-  (-> string? uncond-section?)
-  (define title-line (first (string-split str "\n")))
-  (define title (string-trim-prefix title-line "# "))
-  (define body-str (string-trim-prefix str title-line))
-  (uncond-section (parse-title title) (parse-body body-str)))
+(define (compile-section! sec page-table)
+  (define compiled
+    (if (uncond-section? sec)
+        (compile-uncond-section sec page-table)
+        (compile-cond-section sec page-table)))
+  (hash-set! page-table (section-title sec) compiled))
 
-(define/contract (parse-cond-section str)
-  (-> string? cond-section?)
-  (define title-line (first (string-split str "\n")))
-  (define flag (string-trim-suffix
-                (string-trim-prefix
-                 (last (string-split title-line " ")) "{") "}"))
-  (define title (string-trim-suffix
-                 (string-trim-prefix title-line "#? ")
-                 (string-append " {" flag "}")))
-  (define body-str (string-trim-prefix str title-line))
-  (define body-parts (string-split body-str "---"))
-  (unless (= 2 (length body-parts))
-    (error 'wrong-number-of-body-parts (string-append "\n" str)))
-  (cond-section (parse-title title)
-                (parse-flag flag)
-                (parse-body (first body-parts))
-                (parse-body (second body-parts))))
+(define (compile-next-opts opts)
+  (map (λ (opt)
+         (λ (page-table)
+           (choice-opt (next-opt-label opt)
+                       (hash-ref page-table (next-opt-name opt)))))
+       opts))
+                
+(define (compile-uncond-section sec page-table)
+  (define body (uncond-section-body sec))
+  (compile-body body page-table))
 
-(define/contract (parse-body str)
-  (-> string? body?)
-  (define-values (directives textlines nexts)
-    (for/fold ([directives '()]
-               [textlines '()]
-               [nexts '()])
-              ([line (string-split str "\n")])
-      (cond
-        [(string-prefix? line "(")
-         (values (cons (parse-directive line) directives)
-                 textlines nexts)]
-        [(string-prefix? line "@")
-         (values directives textlines
-                 (cons (parse-next-opt line) nexts))]
-        [else (values directives (cons line textlines) nexts)])))
-  (body (reverse directives)
-        (string-join (reverse textlines) "\n")
-        (reverse nexts)))
 
-(define/contract (parse-directive str)
-  (-> string? directive?)
-  (match
-      (with-handlers ([exn:fail?
-                       (λ (e) (error 'error-reading-directive
-                                     (string-append "\n" str)))])
-        (read (open-input-string str)))
-    [(list 'set-flag flag)
-     (set-flag-directive flag)]
-    [(list 'set-image image-name)
-     (set-image-directive image-name)]
-    [_ (error 'unknown-directive-type (string-append "\n" str))]))
+; TODO
+(define blue (color 39 193 155))
+(define purple (color 161 28 224))
 
-(define/contract (parse-next-opt str)
-  (-> string? next-opt?)
-  (define name (string-trim-prefix
-                (first (string-split str " ")) "@"))
-  (define label (string-trim-suffix
-                 (string-trim-prefix
-                  str (string-append "@" name " [")) "]"))
-  (next-opt (parse-title name) label))
+(define (compile-body body page-table)
+  (define λopts (compile-next-opts (body-next-opts body)))
+  (lazy-complete-page
+   (λ (flags)
+     (choice-page
+      (bitmap/file "trees.png") (body-text body) purple blue
+      (map (λ (λo) (λo page-table)) λopts)))))
 
-(define/contract (parse-title str)
-  (-> string? symbol?)
-  (if (string-contains? str " ")
-      (error 'bad-section-title (string-append "\n" str))
-      (string->symbol str)))
+(define (compile-cond-section sec page-table)
+  (define flag (cond-section-flag sec))
+  (define then (compile-body (cond-section-then sec) page-table))
+  (define else (compile-body (cond-section-else sec) page-table))
+  (lazy-complete-page
+   (λ (flags)
+     (if (has-flag? flags flag)
+         then else))))
 
-(define/contract (parse-flag str)
-  (-> string? symbol?)
-  (if (string-contains? str " ")
-      (error 'bad-flag-name (string-append "\n" str))
-      (string->symbol str)))
 
-(define (string-trim-prefix str pre)
-  (string-trim str pre #:right? #f))
+(define (compile ast)
+  (define page-table (make-hash))
+  (define first-page-name (section-title (first ast)))
+  (for-each
+   (λ (s) (compile-section! s page-table))
+   ast)
+  (hash-ref page-table first-page-name))
 
-(define (string-trim-suffix str suf)
-  (string-trim str suf #:left? #f))
+(define (load-file file)
+  (compile (parse-file file)))
 
-(define ex (file->string "test.oat.rkt"))
-(define sections (string-split ex "\n\n"))
-(map parse-section sections)
+#|
+(eval-lazy-complete-page
+ (eval-lazy-complete-page (hash-ref (compile parsed) 'take) (set 'bittn))
+ 'meow)|#

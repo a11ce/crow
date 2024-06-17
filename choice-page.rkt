@@ -11,24 +11,26 @@
          in-bbox?
          bbox-tag)
 
-(struct choice-opt (label pages))
-(struct choice-page page (opts))
+(struct choice-opt (label pages) #:transparent)
+(struct choice-page page (opts) #:transparent)
 
 (define (render-choice-page page text hovered)
   (define page-base
     (put-page-image-pinhole (render-page page text)))
   (define options-img
     (apply above
-           (for/list ([opt (choice-page-opts page)]
-                      [idx (length (choice-page-opts page))])
-             (above
-              (rectangle 1 10 'solid (color 0 0 0 0))
-              (render-choice-button (choice-opt-label opt)
-                                    (if (equal? idx hovered)
-                                        (color 39 193 155)
-                                        (page-frame-color page))
-                                    (page-text-color page))
-              (rectangle 1 10 'solid (color 0 0 0 0))))))
+           (cons
+            empty-image ; TODO safe-above
+            (for/list ([opt (choice-page-opts page)]
+                       [idx (length (choice-page-opts page))])
+              (above
+               (rectangle 1 10 'solid (color 0 0 0 0))
+               (render-choice-button (choice-opt-label opt)
+                                     (if (equal? idx hovered)
+                                         (color 39 193 155)
+                                         (page-frame-color page))
+                                     (page-text-color page))
+               (rectangle 1 10 'solid (color 0 0 0 0)))))))
   (clear-pinhole (overlay/pinhole
                   options-img
                   page-base)))
@@ -39,9 +41,9 @@
 
 (define (render-choice-button text frame-color text-color)  
   (render-centered-text-box text frame-color text-color
-                   (* 1/3 width)
-                   (* 1/10 height)
-                   5))
+                            (* 1/3 width)
+                            (* 1/10 height)
+                            5))
 
 (struct bbox (tag tl br) #:transparent)
 (struct pt (x y) #:transparent)

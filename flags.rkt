@@ -6,7 +6,7 @@
 (provide (struct-out flag-set-point)
          make-flagset
          flagset-add
-         flag-cond)
+         has-flag?)
 
 (struct flag-set-point (flag))
 
@@ -21,9 +21,3 @@
 (define/contract (has-flag? flagset flag)
   (-> flagset? symbol? boolean?)
   (set-member? flagset flag))
-
-(define/contract (flag-cond flag then else)
-  (-> symbol? any/c any/c (-> flagset? any/c))
-  (lambda (flagset)
-    (if (has-flag? flagset flag)
-        then else)))
