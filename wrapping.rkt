@@ -1,7 +1,7 @@
 #lang racket/base
 
-(require racket/string
-         racket/list)
+(require racket/list
+         racket/string)
 
 (provide wrap)
 

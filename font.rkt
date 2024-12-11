@@ -1,7 +1,7 @@
 #lang racket/base
 
-(require (except-in 2htdp-raven/image text)
-         racket/string)
+(require racket/string
+         (except-in 2htdp-raven/image text))
 
 (provide the-font
          normalize-text-charset)
