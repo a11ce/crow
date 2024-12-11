@@ -1,10 +1,10 @@
 #lang racket/base
 
-(require (except-in 2htdp-raven/universe state)
-         racket/contract
-         "vn-gen.rkt"
+(require racket/contract
+         (except-in 2htdp-raven/universe state)
          "input.rkt"
-         "test-data.rkt")
+         "test-data.rkt"
+         "vn-gen.rkt")
 
 (define (init)
   (crow-state (vn-gen test-pages)

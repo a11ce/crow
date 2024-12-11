@@ -1,9 +1,9 @@
 #lang racket/base
 
-(require (except-in 2htdp-raven/image text)
+(require memo
          racket/match
          racket/string
-         memo
+         (except-in 2htdp-raven/image text)
          "font.rkt")
 
 (provide text)

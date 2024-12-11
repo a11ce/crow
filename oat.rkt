@@ -1,10 +1,10 @@
 #lang racket/base
 
 (require racket/contract
+         racket/file
          racket/list
-         racket/string
          racket/match
-         racket/file)
+         racket/string)
 
 (struct cond-section (title flag then else) #:transparent)
 (struct uncond-section (title body) #:transparent)

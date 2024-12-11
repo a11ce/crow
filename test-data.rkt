@@ -3,11 +3,11 @@
 (require 2htdp-raven/image
          racket/file
          racket/function
-         "page.rkt"
-         "lazy-section.rkt"
-         "font.rkt"
          "choice-page.rkt"
-         "flags.rkt")
+         "flags.rkt"
+         "font.rkt"
+         "lazy-section.rkt"
+         "page.rkt")
 
 (provide test-pages)
 

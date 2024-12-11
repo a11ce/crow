@@ -1,13 +1,13 @@
 #lang racket/base
 
-(require racket/generator
+(require racket/contract
+         racket/generator
          racket/match
-         racket/contract
-         "page.rkt"
          "choice-page.rkt"
-         "lazy-section.rkt"
          "flags.rkt"
-         "input.rkt")
+         "input.rkt"
+         "lazy-section.rkt"
+         "page.rkt")
 
 (provide vn-gen
          (struct-out vn-ctx))
