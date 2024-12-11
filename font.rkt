@@ -39,13 +39,13 @@ ASCII
 
 (define (normalize-text-charset text)
   (list->string
-   (map (λ (char)
-          (case char
-            [(#\“ #\”) #\"]
-            [(#\‘ #\’) #\']
-            [(#\—) #\-]
-            [(#\newline) #\newline]
-            [else (if (hash-has-key? the-font char)
-                      char
-                      (error "unmapped char in normalization" char))]))
-        (string->list text))))
+   (for/list ([char (in-string text)])
+     (case char
+       [(#\“ #\”) #\"]
+       [(#\‘ #\’) #\']
+       [(#\—) #\-]
+       [(#\newline) #\newline]
+       [else
+        (if (hash-has-key? the-font char)
+            char
+            (error "unmapped char in normalization" char))]))))
