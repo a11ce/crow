@@ -46,6 +46,6 @@ ASCII
        [(#\—) #\-]
        [(#\newline) #\newline]
        [else
-        (if (hash-has-key? the-font char)
-            char
-            (error "unmapped char in normalization" char))]))))
+        (unless (hash-has-key? the-font char)
+          (error "unmapped char in normalization" char))
+        char]))))
