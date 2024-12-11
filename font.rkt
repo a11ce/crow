@@ -1,7 +1,7 @@
 #lang racket/base
 
-(require (except-in 2htdp-raven/image text)
-         racket/string)
+(require racket/string
+         (except-in 2htdp-raven/image text))
 
 (provide the-font
          normalize-text-charset)
@@ -39,13 +39,13 @@ ASCII
 
 (define (normalize-text-charset text)
   (list->string
-   (map (λ (char)
-          (case char
-            [(#\“ #\”) #\"]
-            [(#\‘ #\’) #\']
-            [(#\—) #\-]
-            [(#\newline) #\newline]
-            [else (if (hash-has-key? the-font char)
-                      char
-                      (error "unmapped char in normalization" char))]))
-        (string->list text))))
+   (for/list ([char (in-string text)])
+     (case char
+       [(#\“ #\”) #\"]
+       [(#\‘ #\’) #\']
+       [(#\—) #\-]
+       [(#\newline) #\newline]
+       [else
+        (unless (hash-has-key? the-font char)
+          (error "unmapped char in normalization" char))
+        char]))))
