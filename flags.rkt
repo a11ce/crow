@@ -3,12 +3,9 @@
 (require racket/contract
          racket/set)
 
-(provide (struct-out flag-set-point)
-         make-flagset
+(provide make-flagset
          flagset-add
          has-flag?)
-
-(struct flag-set-point (flag))
 
 (define make-flagset set)
 

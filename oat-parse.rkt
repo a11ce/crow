@@ -2,7 +2,6 @@
 
 (require racket/list
          racket/string
-         racket/match
          racket/file
          racket/contract)
 

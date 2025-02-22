@@ -1,4 +1,8 @@
 # start
+on the next page you will set the flag
+@choice
+
+# choice
 set the flag?
 @set [set the flag]
 @dont-set [dont set the flag]

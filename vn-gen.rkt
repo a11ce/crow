@@ -55,6 +55,7 @@
        (loop concrete-page next-run-state)]
       [else (error "unknown page type" page)])))
 
+; TODO add back to handle directives splitting sequences
 (define (vn-gen-page page)
   (define text (page-text page))
   (define page-length (string-length text))
@@ -76,15 +77,6 @@
                      (loop (add1 (max idx page-length)) #f))]
       [(render) (loop idx #t)]
       [else (error "unknown vn-gen command" command)])))
-
-
-(define (vn-gen-abstract-section sec flags)
-  (define pages (eval-abstract-section sec flags))
-  (vn-gen-pages pages flags))
-
-(define (vn-gen-abstract-complete-page lpage flags)
-  (define page (eval-abstract-complete-page lpage flags))
-  (vn-gen-pages page flags))
 
 (define (vn-gen-choice page)
   (define text (page-text page))

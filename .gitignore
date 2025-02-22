@@ -41,3 +41,5 @@ TAGS
 _zuo.db
 _zuo_tc.db
 etc/
+
+test*.rkt
