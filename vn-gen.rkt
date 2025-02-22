@@ -5,8 +5,8 @@
          racket/contract
          "page.rkt"
          "choice-page.rkt"
-         "lazy-section.rkt"
-         "flags.rkt"
+         "abstract-page.rkt"
+         "run-state.rkt"
          "input.rkt")
 
 (provide vn-gen
@@ -38,40 +38,22 @@
 (define (vn-gen first-page)
   (contractualize-vn-gen
    (generator (_)
-     (vn-gen-pages first-page (make-flagset)))))
+    (vn-gen-pages first-page (make-run-state)))))
 
-(define (vn-gen-pages pages flags)
-  (let loop ([pages pages]
-             [stack '()]
-             [flags flags])
-    (define page
-      (cond
-        [(pair? pages) (car pages)]
-        [else pages]))
+(define (vn-gen-pages start-page init-run-state)
+  (let loop ([page start-page]
+             [run-state init-run-state])
     (cond
-      ; TODO flags
-      [(and (null? pages) (null? stack))
-       flags]
-      [(null? pages)
-       (loop (car stack) (cdr stack) flags)]
       [(choice-page? page)
-       (loop (vn-gen-choice page) (cons (cdr pages) stack) flags)]
-      [(list? page)
-       (loop page (cons (cdr pages) stack) flags)]
-      [(page? page)
-       (vn-gen-page page)
-       (loop (cdr pages) stack flags)]
-      [(lazy-section? page)
-       (define new-flags (vn-gen-lazy-section page flags))
-       (loop (cdr pages) stack new-flags)]
-      [(lazy-complete-page? page)
-       ; i think this is wrong?
-       (define concrete-page (eval-lazy-complete-page page flags))
-       (loop (vn-gen-choice page) (cons (cdr pages) stack) flags)]
-      [(flag-set-point? page)
-       (loop (cdr pages) stack (flagset-add flags (flag-set-point-flag page)))]
+       (loop (vn-gen-choice page) run-state)]
+      [(abstract-complete-page? page)
+       (define next-run-state (apply-directives
+                               run-state
+                               (abstract-complete-page-directives page)
+                               ))
+       (define concrete-page (eval-abstract-complete-page page next-run-state))
+       (loop concrete-page next-run-state)]
       [else (error "unknown page type" page)])))
-
 
 (define (vn-gen-page page)
   (define text (page-text page))
@@ -96,12 +78,12 @@
       [else (error "unknown vn-gen command" command)])))
 
 
-(define (vn-gen-lazy-section sec flags)
-  (define pages (eval-lazy-section sec flags))
+(define (vn-gen-abstract-section sec flags)
+  (define pages (eval-abstract-section sec flags))
   (vn-gen-pages pages flags))
 
-(define (vn-gen-lazy-complete-page lpage flags)
-  (define page (eval-lazy-complete-page lpage flags))
+(define (vn-gen-abstract-complete-page lpage flags)
+  (define page (eval-abstract-complete-page lpage flags))
   (vn-gen-pages page flags))
 
 (define (vn-gen-choice page)

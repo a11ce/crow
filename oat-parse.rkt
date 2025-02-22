@@ -11,8 +11,6 @@
          (struct-out uncond-section)
          (struct-out body)
          (struct-out directive)
-         (struct-out set-flag-directive)
-         (struct-out set-image-directive)
          (struct-out next-opt)
          parse-file)
 
@@ -21,9 +19,7 @@
 (struct uncond-section section (body) #:transparent)
 (struct body (directives text next-opts) #:transparent)
 
-(struct directive () #:transparent)
-(struct set-flag-directive directive (flag) #:transparent)
-(struct set-image-directive directive (image-name) #:transparent)
+(struct directive (type args) #:transparent)
 
 (struct next-opt (name label) #:transparent)
 
@@ -67,6 +63,7 @@
                 (parse-body (first body-parts))
                 (parse-body (second body-parts))))
 
+
 (define/contract (parse-body str)
   (-> string? body?)
   (define-values (directives textlines nexts)
@@ -88,16 +85,13 @@
 
 (define/contract (parse-directive str)
   (-> string? directive?)
-  (match
-      (with-handlers ([exn:fail?
-                       (λ (e) (error 'error-reading-directive
-                                     (string-append "\n" str)))])
-        (read (open-input-string str)))
-    [(list 'set-flag flag)
-     (set-flag-directive flag)]
-    [(list 'set-image image-name)
-     (set-image-directive image-name)]
-    [_ (error 'unknown-directive-type (string-append "\n" str))]))
+  (define directive-sexp
+    (with-handlers ([exn:fail?
+                     (λ (e) (error 'error-reading-directive
+                                   (string-append "\n" str)))])
+      (read (open-input-string str))))
+  (directive (car directive-sexp)
+             (cdr directive-sexp)))
 
 (define/contract (parse-next-opt str)
   (-> string? next-opt?)

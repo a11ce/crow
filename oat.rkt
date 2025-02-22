@@ -1,9 +1,9 @@
 #lang racket
 
 (require "oat-parse.rkt"
-         "lazy-section.rkt"
+         "abstract-page.rkt"
          "choice-page.rkt"
-         "flags.rkt"
+         "run-state.rkt"
          2htdp-raven/image)
 
 (provide load-file)
@@ -21,39 +21,55 @@
         (compile-cond-section sec page-table)))
   (hash-set! page-table (section-title sec) compiled))
 
+(define (hash-ref-or-end page-table ref)
+  (if (equal? '@end ref)
+      '@end
+      (hash-ref page-table ref)))
+
 (define (compile-next-opts opts)
   (map (λ (opt)
          (λ (page-table)
            (choice-opt (next-opt-label opt)
-                       (hash-ref page-table (next-opt-name opt)))))
+                       (hash-ref-or-end
+                        page-table (next-opt-name opt)))))
        opts))
                 
 (define (compile-uncond-section sec page-table)
+  (define title (~a (section-title sec)))
   (define body (uncond-section-body sec))
-  (compile-body body page-table))
+  (compile-body title body page-table))
 
 
 ; TODO
 (define blue (color 39 193 155))
 (define purple (color 161 28 224))
 
-(define (compile-body body page-table)
+(define (compile-body title body page-table)
   (define λopts (compile-next-opts (body-next-opts body)))
-  (lazy-complete-page
-   (λ (flags)
+  (abstract-complete-page
+   title
+   (compile-directives (body-directives body))
+   (λ (run-state)
      (choice-page
       (bitmap/file "trees.png") (body-text body) purple blue
       (map (λ (λo) (λo page-table)) λopts)))))
 
 (define (compile-cond-section sec page-table)
   (define flag (cond-section-flag sec))
-  (define then (compile-body (cond-section-then sec) page-table))
-  (define else (compile-body (cond-section-else sec) page-table))
-  (lazy-complete-page
-   (λ (flags)
-     (if (has-flag? flags flag)
+  (define then (compile-body (string-append (~a (section-title sec)) ".then")
+                             (cond-section-then sec) page-table))
+  (define else (compile-body (string-append (~a (section-title sec)) ".else")
+                             (cond-section-else sec) page-table))
+  (abstract-complete-page
+   (~a (section-title sec))
+   '()
+   (λ (run-state)
+     (if (run-state-has-flag? run-state flag)
          then else))))
 
+(define (compile-directives dirs)
+  ; TODO parse valid
+  dirs)
 
 (define (compile ast)
   (define page-table (make-hash))
@@ -65,8 +81,3 @@
 
 (define (load-file file)
   (compile (parse-file file)))
-
-#|
-(eval-lazy-complete-page
- (eval-lazy-complete-page (hash-ref (compile parsed) 'take) (set 'bittn))
- 'meow)|#

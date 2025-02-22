@@ -4,10 +4,11 @@
          racket/contract
          "vn-gen.rkt"
          "input.rkt"
-         "oat.rkt")
+         "oat.rkt"
+         "run-state.rkt")
 
 (define (init)
-  (crow-state (vn-gen (load-file "test.oat.rkt"))
+  (crow-state (vn-gen (load-file "flag-test.oat.rkt"))
               page-handle-key
               page-handle-mouse))
 
