@@ -2,11 +2,13 @@
 
 (require "oat-parse.rkt"
          "abstract-page.rkt"
+         "page.rkt"
          "choice-page.rkt"
          "run-state.rkt"
          2htdp-raven/image)
 
-(provide load-file)
+(provide load-file
+         compile)
 
 ;(define parsed (parse-file "test.oat.rkt"))
 
@@ -33,6 +35,9 @@
                        (hash-ref-or-end
                         page-table (next-opt-name opt)))))
        opts))
+
+(define (compile-next-direct next)
+  (λ (page-table) (hash-ref-or-end page-table (next-direct-name next))))
                 
 (define (compile-uncond-section sec page-table)
   (define title (~a (section-title sec)))
@@ -45,14 +50,20 @@
 (define purple (color 161 28 224))
 
 (define (compile-body title body page-table)
-  (define λopts (compile-next-opts (body-next-opts body)))
-  (abstract-complete-page
+  (define is-direct? (next-direct? (body-next body)))
+  (abstract-page
    title
    (compile-directives (body-directives body))
    (λ (run-state)
-     (choice-page
-      (bitmap/file "trees.png") (body-text body) purple blue
-      (map (λ (λo) (λo page-table)) λopts)))))
+     (if is-direct?
+         (direct-page (bitmap/file "trees.png") (body-text body) purple blue
+                      ((compile-next-direct (body-next body)) page-table))
+         (let ()
+           (displayln (compile-next-opts (body-next body)))
+           (choice-page (bitmap/file "trees.png") (body-text body) purple blue
+                        (map
+                         (λ (λo) (λo page-table))
+                         (compile-next-opts (body-next body)))))))))
 
 (define (compile-cond-section sec page-table)
   (define flag (cond-section-flag sec))
@@ -60,7 +71,7 @@
                              (cond-section-then sec) page-table))
   (define else (compile-body (string-append (~a (section-title sec)) ".else")
                              (cond-section-else sec) page-table))
-  (abstract-complete-page
+  (abstract-page
    (~a (section-title sec))
    '()
    (λ (run-state)

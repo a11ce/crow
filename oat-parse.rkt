@@ -10,17 +10,19 @@
          (struct-out uncond-section)
          (struct-out body)
          (struct-out directive)
+         (struct-out next-direct)
          (struct-out next-opt)
          parse-file)
 
 (struct section (title) #:transparent)
 (struct cond-section section (flag then else) #:transparent)
 (struct uncond-section section (body) #:transparent)
-(struct body (directives text next-opts) #:transparent)
+
+(struct body (directives text next) #:transparent)
+(struct next-direct (name) #:transparent)
+(struct next-opt (name label) #:transparent)
 
 (struct directive (type args) #:transparent)
-
-(struct next-opt (name label) #:transparent)
 
 (define (parse-file file)
   (define file-str (file->string file))
@@ -65,22 +67,31 @@
 
 (define/contract (parse-body str)
   (-> string? body?)
-  (define-values (directives textlines nexts)
+  (define-values (directives textlines nexts is-direct)
     (for/fold ([directives '()]
                [textlines '()]
-               [nexts '()])
+               [nexts '()]
+               [is-direct #f])
               ([line (string-split str "\n")])
       (cond
         [(string-prefix? line "(")
          (values (cons (parse-directive line) directives)
-                 textlines nexts)]
+                 textlines nexts is-direct)]
         [(string-prefix? line "@")
+         (define parsed-next (parse-next line))
          (values directives textlines
-                 (cons (parse-next-opt line) nexts))]
-        [else (values directives (cons line textlines) nexts)])))
+                 (cons (parse-next line) nexts)
+                 (or is-direct (next-direct? parsed-next)))]
+        [else (values directives
+                      (cons line textlines) nexts is-direct)])))
+  (when (and is-direct (< 1 (length nexts)))
+    (error 'too-many-next-pointers-including-direct
+           (string-append "\n" str)))
   (body (reverse directives)
         (string-join (reverse textlines) "\n")
-        (reverse nexts)))
+        (if is-direct
+            (first nexts)
+            (reverse nexts))))
 
 (define/contract (parse-directive str)
   (-> string? directive?)
@@ -92,14 +103,16 @@
   (directive (car directive-sexp)
              (cdr directive-sexp)))
 
-(define/contract (parse-next-opt str)
-  (-> string? next-opt?)
+(define/contract (parse-next str)
+  (-> string? (or/c next-opt? next-direct?))
   (define name (string-trim-prefix
                 (first (string-split str " ")) "@"))
   (define label (string-trim-suffix
                  (string-trim-prefix
                   str (string-append "@" name " [")) "]"))
-  (next-opt (parse-title name) label))
+  (if (equal? label str)
+      (next-direct (parse-title name))
+      (next-opt (parse-title name) label)))
 
 (define/contract (parse-title str)
   (-> string? symbol?)

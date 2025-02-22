@@ -2,10 +2,10 @@
 
 (require "page.rkt")
 
-(provide (struct-out abstract-complete-page)
-         eval-abstract-complete-page)
+(provide (struct-out abstract-page)
+         eval-abstract-page)
 
-(struct abstract-complete-page (name directives λpage) #:transparent)
+(struct abstract-page (name directives λpage) #:transparent)
 
-(define (eval-abstract-complete-page page story-state)
-  ((abstract-complete-page-λpage page) story-state))
+(define (eval-abstract-page page story-state)
+  ((abstract-page-λpage page) story-state))

@@ -46,17 +46,18 @@
     (cond
       [(choice-page? page)
        (loop (vn-gen-choice page) run-state)]
-      [(abstract-complete-page? page)
+      [(direct-page? page)
+       (loop (vn-gen-direct page) run-state)]
+      [(abstract-page? page)
        (define next-run-state (apply-directives
                                run-state
-                               (abstract-complete-page-directives page)
+                               (abstract-page-directives page)
                                ))
-       (define concrete-page (eval-abstract-complete-page page next-run-state))
+       (define concrete-page (eval-abstract-page page next-run-state))
        (loop concrete-page next-run-state)]
       [else (error "unknown page type" page)])))
 
-; TODO add back to handle directives splitting sequences
-(define (vn-gen-page page)
+(define (vn-gen-direct page)
   (define text (page-text page))
   (define page-length (string-length text))
   ; TODO only when advanced
@@ -73,7 +74,7 @@
     (case command
       [(tick) (loop (add1 idx) #f)]
       [(advance) (if (>= idx delayed-page-length)
-                     #t
+                     (direct-page-next page)
                      (loop (add1 (max idx page-length)) #f))]
       [(render) (loop idx #t)]
       [else (error "unknown vn-gen command" command)])))
