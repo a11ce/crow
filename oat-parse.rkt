@@ -55,7 +55,8 @@
   (define title (string-trim-suffix
                  (string-trim-prefix title-line "#? ")
                  (string-append " {" flag "}")))
-  (define body-str (string-trim-prefix str title-line))
+  (define body-str (string-trim-prefix
+                    (string-trim str) title-line))
   (define body-parts (string-split body-str "---"))
   (unless (= 2 (length body-parts))
     (error 'wrong-number-of-body-parts (string-append "\n" str)))

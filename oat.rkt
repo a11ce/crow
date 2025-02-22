@@ -58,12 +58,10 @@
      (if is-direct?
          (direct-page (bitmap/file "trees.png") (body-text body) purple blue
                       ((compile-next-direct (body-next body)) page-table))
-         (let ()
-           (displayln (compile-next-opts (body-next body)))
-           (choice-page (bitmap/file "trees.png") (body-text body) purple blue
-                        (map
-                         (λ (λo) (λo page-table))
-                         (compile-next-opts (body-next body)))))))))
+         (choice-page (bitmap/file "trees.png") (body-text body) purple blue
+                      (map
+                       (λ (λo) (λo page-table))
+                       (compile-next-opts (body-next body))))))))
 
 (define (compile-cond-section sec page-table)
   (define flag (cond-section-flag sec))
